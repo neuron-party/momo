@@ -1,6 +1,7 @@
 # dynaQ tabular q learning for integrated learning and planning
 import numpy as np
 import random
+from utils import *
 
 
 class DynaQ: # need prioritized sweeping as well
