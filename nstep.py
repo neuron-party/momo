@@ -1,7 +1,7 @@
 # n-step td tabular q learning
 import numpy as np
 import random
-from utils import *
+from utils.utils import *
 
 
 class nStepTD:

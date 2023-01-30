@@ -1,6 +1,6 @@
 # 1-step td tabular q learning
 import numpy as np
-from utils import *
+from utils.utils import *
 
 
 class TabularQ_TD:
