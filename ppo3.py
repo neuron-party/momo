@@ -12,15 +12,22 @@ class PPO3:
         self.action_space = action_space
         
         self.gamma = params['gamma']
+        self.epochs = params['epochs']
+        self.num_minibatches = params['num_minibatches']
         self.lambd = params['lambd']
         self.lr = params['lr']
         self.device = params['device']
         self.num_steps = params['num_steps']
         self.num_envs = params['num_envs']
         self.vf_clip = params['vf_clip']
+        self.epsilon = params['epsilon']
         self.c1 = params['c1']
         self.c2 = params['c2']
         
+        self.model = model.to(self.device)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        
+        self.num_updates = 0
         self.memory = []
         
     def remember(self, state, action, reward, next_state, done, log_probs_old, value_estimate_old):
@@ -34,7 +41,7 @@ class PPO3:
             action = pi.sample()
             
             log_probs_old = pi.log_prob(action)
-            value_estimate_old = value
+            value_estimate_old = value.view(-1, )
             
         return action.detach().cpu().numpy(), log_probs_old.detach().cpu().numpy(), value_estimate_old.detach().cpu().numpy()
     
@@ -49,10 +56,11 @@ class PPO3:
         with torch.no_grad():
             next_state = torch.tensor(self.memory[-1][3], dtype=torch.float32, device=self.device)
             _, next_value_estimate = self.model(next_state)
+            next_value_estimate = next_value_estimate.view(-1, )
             next_value_estimate = next_value_estimate.detach().cpu().numpy()
             
-            advantange = 0
-            for i in range(reversed(len(self.memory))): # does sending shit to the device like this take up more memory than using numpy arrays?
+            advantage = 0
+            for i in reversed(range(len(self.memory))): # does sending shit to the device like this take up more memory than using numpy arrays?
                 if i == self.num_steps - 1:
                     next_values = next_value_estimate
                     terminal = 1 - self.memory[-1][4]
@@ -63,22 +71,28 @@ class PPO3:
                 advantage = delta + self.gamma * self.lambd * terminal * advantage
                 value_target = self.memory[i][6] + advantage
                 
-                # [state, action, old_log_probs, old_value_estimates, advantages, value_targets]
-                dataset.append([self.memory[i][0], self.memory[i][1], self.memory[i][4], self.memory[i][5], advantage, value_target]) 
+                iterable = [[s, a, olp, ove, av, vt] for s, a, olp, ove, av, vt in 
+                            zip(self.memory[i][0], self.memory[i][1], self.memory[i][5], self.memory[i][6], advantage, value_target)]
                 
+                # [state, action, old_log_probs, old_value_estimates, advantages, value_targets]
+                dataset.append(iterable) 
+        
+        self.memory = []
         dataset = list(itertools.chain.from_iterable(dataset))
         assert len(dataset) == self.num_steps * self.num_envs
         return dataset
         
     def learn(self):
-        dataset = self._make_dataset()
+        dataset = self._make_dataset() # [256, 6, 64, ...]
         
-        states = torch.stack([i[0] for i in dataset]).to(self.device) # [dataset_length, observation_shape]
+        states = torch.tensor(np.stack([i[0] for i in dataset]), dtype=torch.float32, device=self.device) # [dataset_length, observation_shape]
         actions = torch.tensor([i[1] for i in dataset], dtype=torch.int64, device=self.device) # [dataset_length, ]
         old_log_probs = torch.tensor([i[2] for i in dataset], dtype=torch.float32, device=self.device) # [dataset_length, ]
         old_value_estimates = torch.tensor([i[3] for i in dataset], dtype=torch.float32, device=self.device) # [dataset_length, ]
         advantages = torch.tensor([i[4] for i in dataset], dtype=torch.float32, device=self.device) # [dataset_length, ]
         value_targets = torch.tensor([i[5] for i in dataset], dtype=torch.float32, device=self.device) # [dataset_length, ]
+        
+        # import pdb; pdb.set_trace()
         
         random_idxes = np.arange(len(dataset))
         
@@ -95,6 +109,7 @@ class PPO3:
                 vt = value_targets[minibatch_idx]
                 
                 pi, value = self.model(s)
+                value = value.view(-1, )
                 log_probs = pi.log_prob(a)
                 entropy = pi.entropy()
                 
