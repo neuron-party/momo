@@ -12,7 +12,7 @@ import gym
 import procgen
 
 from algorithms.ppo4 import PPO4
-from networks import ImpalaCNN
+from networks.impala import ImpalaCNN
 
 
 def parse_args():
