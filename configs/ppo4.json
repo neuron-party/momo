@@ -1,0 +1,1 @@
+{"device": 0, "c1": 0.5, "c2": 0.01, "lr": 0.0005, "gamma": 0.999, "lambd": 0.95, "epsilon": 0.2, "vf_clip": 0.2, "norm_adv": true, "max_grad_norm": 0.5, "num_steps": 256, "num_epochs": 3, "num_batches": 8, "num_envs": 128}
