@@ -9,24 +9,25 @@ class PPO4:
         self.observation_space = observation_space
         self.action_space = action_space
         
-        self.gamma = params['gamma']
-        self.lambd = params['lambd']
-        self.lr = params['lr']
-        self.epsilon = params['epsilon']
-        self.vf_clip = params['vf_clip']
-        self.max_grad_norm = params['max_grad_norm']
-        self.norm_adv = params['norm_adv']
+        self.device = torch.device('cuda:' + str(params['device']))
         self.c1 = params['c1']
         self.c2 = params['c2']
-        
-        self.device = params['device']
-        self.model = model.to(self.device)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        self.lr = params['lr']
+        self.gamma = params['gamma']
+        self.lambd = params['lambd']
+        self.epsilon = params['epsilon']
+        self.vf_clip = params['vf_clip']
+        self.norm_adv = params['norm_adv']
+        self.max_grad_norm = params['max_grad_norm']
         
         self.num_steps = params['num_steps']
         self.num_epochs = params['num_epochs']
         self.num_batches = params['num_batches']
         self.num_envs = params['num_envs']
+        
+        self.model = model.to(self.device)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        
         self.batch_size = self.num_envs * self.num_steps // self.num_batches
         self.num_updates = 0
         
