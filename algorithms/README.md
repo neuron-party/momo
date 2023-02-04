@@ -9,4 +9,4 @@
 `mc.py`: model-free, off-policy monte carlo <br>
 `nstep.py`: model-free, off-policy n-step <br>
 `sarsa.py`: model-free, on-policy learning <br>
-`td`: model-free, off-policy 1-step td learning
+`td.py`: model-free, off-policy 1-step td learning
