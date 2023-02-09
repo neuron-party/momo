@@ -1,5 +1,3 @@
-# ip, this shit mid rn
-
 class SAC:
     '''
     Soft Actor Critic
@@ -101,8 +99,8 @@ class SAC:
             q_target = data.rewards + self.gamma * vf_approximation * (1 - data.dones)
         
         q_approximation_1, q_approximation_2 = self.q_approximator_1(data.observations), self.q_approximator_2(data.observations)
-        q_approximation_1 = torch.gather(q_approximation_1, 1, stochastic_actions)
-        q_approximation_2 = torch.gather(q_approximation_2, 1, stochastic_actions)
+        q_approximation_1 = torch.gather(q_approximation_1, 1, data.actions)
+        q_approximation_2 = torch.gather(q_approximation_2, 1, data.actions)
         
         qf_loss_1 = F.mse_loss(q_approximation_1, q_target.detach())
         qf_loss_2 = F.mse_loss(q_approximation_2, q_target.detach())
