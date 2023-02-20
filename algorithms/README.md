@@ -10,3 +10,6 @@
 `nstep.py`: model-free, off-policy n-step <br>
 `sarsa.py`: model-free, on-policy learning <br>
 `td.py`: model-free, off-policy 1-step td learning
+
+### algorithm's im looking at now
+`ddpg, sac, dqn upgrades, mtcs`
